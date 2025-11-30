@@ -1,0 +1,49 @@
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache \
+    curl \
+    git \
+    zip \
+    unzip \
+    libzip-dev \
+    icu-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    oniguruma-dev \
+    mysql-client \
+    supervisor
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mysqli \
+    mbstring \
+    zip \
+    gd \
+    intl \
+    opcache \
+    pcntl \
+    bcmath
+
+RUN pecl install redis && docker-php-ext-enable redis
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/backend
+
+COPY backend/composer.json backend/composer.lock* ./
+RUN composer install --no-dev --optimize-autoloader --no-scripts || true
+
+COPY backend .
+
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+    && chmod -R 775 storage \
+    && chown -R www-data:www-data storage
+
+RUN composer dump-autoload --optimize
+
+EXPOSE 9000
+
+CMD ["php-fpm"]
