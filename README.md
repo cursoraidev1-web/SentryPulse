@@ -167,6 +167,7 @@ NEXT_PUBLIC_APP_NAME=SentryPulse
 
 - [Quick Start](QUICKSTART.md) - Get started in 5 minutes
 - [Setup Guide](SETUP.md) - Detailed setup instructions
+- [AWS Deployment](AWS_DEPLOYMENT.md) - Deploy to AWS (EC2, RDS, ECS)
 - [API Documentation](docs/api.md) - Complete API reference
 - [Architecture](docs/architecture.md) - System architecture
 - [Node.js Migration](NODEJS_MIGRATION.md) - Backend migration notes
@@ -221,13 +222,33 @@ docker compose exec backend sh
 
 ## Production Deployment
 
-1. Update environment variables for production
-2. Set strong `JWT_SECRET` and database passwords
-3. Configure SSL certificates in nginx
-4. Set up database backups
-5. Configure monitoring and alerts
+### Deploy to AWS
 
-See [SETUP.md](SETUP.md) for detailed production deployment guide.
+We have a complete AWS deployment guide with two options:
+
+**Option 1: Simple EC2 (~$40/month)**
+- Single EC2 instance
+- Docker Compose
+- Perfect for small/medium teams
+- 30-minute setup
+
+**Option 2: Production Architecture (~$350/month)**
+- ECS/Fargate
+- RDS Multi-AZ
+- ElastiCache Redis
+- Auto-scaling
+- High availability
+
+📖 **Full Guide:** [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)
+
+### Other Options
+
+- **DigitalOcean/Linode VPS**: $12-50/month
+- **Heroku**: $50-150/month (zero DevOps)
+- **Google Cloud**: ~$60/month
+- **Self-hosted**: Your own server
+
+📖 **Compare All Options:** [DEPLOYMENT_OPTIONS.md](DEPLOYMENT_OPTIONS.md)
 
 ## License
 
