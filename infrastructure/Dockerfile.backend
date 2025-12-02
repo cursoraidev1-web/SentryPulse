@@ -1,49 +1,36 @@
-FROM php:8.2-fpm-alpine
+FROM node:20-alpine AS builder
 
-RUN apk add --no-cache \
-    curl \
-    git \
-    zip \
-    unzip \
-    libzip-dev \
-    icu-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    oniguruma-dev \
-    mysql-client \
-    supervisor
+WORKDIR /app
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install \
-    pdo \
-    pdo_mysql \
-    mysqli \
-    mbstring \
-    zip \
-    gd \
-    intl \
-    opcache \
-    pcntl \
-    bcmath
+# Copy package files
+COPY backend/package*.json ./
+RUN npm ci
 
-RUN pecl install redis && docker-php-ext-enable redis
+# Copy source
+COPY backend/ ./
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Build TypeScript
+RUN npm run build
 
-WORKDIR /var/www/backend
+FROM node:20-alpine AS runner
 
-COPY backend/composer.json backend/composer.lock* ./
-RUN composer install --no-dev --optimize-autoloader --no-scripts || true
+WORKDIR /app
 
-COPY backend .
+ENV NODE_ENV=production
 
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
-    && chmod -R 775 storage \
-    && chown -R www-data:www-data storage
+# Install production dependencies only
+COPY backend/package*.json ./
+RUN npm ci --only=production
 
-RUN composer dump-autoload --optimize
+# Copy built files
+COPY --from=builder /app/dist ./dist
+COPY backend/.env.example ./.env
 
-EXPOSE 9000
+# Create logs directory
+RUN mkdir -p logs && chown -R node:node logs
 
-CMD ["php-fpm"]
+USER node
+
+EXPOSE 8000
+
+CMD ["node", "dist/index.js"]

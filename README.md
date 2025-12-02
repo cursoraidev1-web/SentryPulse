@@ -2,6 +2,10 @@
 
 A comprehensive SaaS platform for website monitoring, analytics, and incident management.
 
+**Backend**: Node.js + TypeScript + Express  
+**Frontend**: Next.js 14 + React + TypeScript  
+**Database**: MySQL 8 + Redis
+
 ## Features
 
 - **Uptime Monitoring**: HTTP/HTTPS health checks with SSL and DNS validation
@@ -17,54 +21,91 @@ A comprehensive SaaS platform for website monitoring, analytics, and incident ma
 ### Prerequisites
 
 - Docker & Docker Compose
-- Git
+- Ports 80, 3000, 3306, 6379, 8000 available
 
-### Installation
+### Installation (3 steps!)
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd sentrypulse
+# 1. Start everything
+docker compose up --build -d
+
+# 2. Wait for MySQL (about 10 seconds)
+sleep 10
+
+# 3. Initialize database
+docker compose exec backend npm run migrate
+docker compose exec backend npm run seed
 ```
 
-2. Copy environment files:
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local
-```
+### Access
 
-3. Update environment variables in `backend/.env` and `frontend/.env.local`
-
-4. Build and start services:
-```bash
-docker compose up --build
-```
-
-5. Run migrations:
-```bash
-docker compose exec backend php artisan migrate --seed
-```
-
-### Access Points
-
-- **Frontend Dashboard**: http://localhost:3000
+- **Dashboard**: http://localhost:3000
 - **Backend API**: http://localhost:8000/api
-- **API Documentation**: http://localhost:8000/api/docs
+- **Tracker**: http://localhost/tracker.js
 
-### Default Credentials
+**Default Login**: admin@sentrypulse.com / password
 
-- Email: admin@sentrypulse.com
-- Password: password
+## Technology Stack
+
+### Backend (Node.js + TypeScript)
+- Express.js web framework
+- MySQL 8 with connection pooling
+- Redis for caching and queues
+- JWT authentication
+- TypeScript for type safety
+- Winston for logging
+
+### Frontend (Next.js + TypeScript)
+- Next.js 14 with App Router
+- React 18
+- TailwindCSS for styling
+- SWR for data fetching
+- Dark mode support
+
+### Infrastructure
+- Docker & Docker Compose
+- Nginx reverse proxy
+- Automated health checks
+- Hot reload in development
 
 ## Project Structure
 
 ```
 sentrypulse/
-├── backend/          # Laravel PHP backend
-├── frontend/         # Next.js React frontend
-├── tracking/         # Analytics tracking scripts
-├── infrastructure/   # Docker, nginx, supervisor configs
+├── backend/          # Node.js/TypeScript backend
+│   ├── src/
+│   │   ├── config/       # Configuration
+│   │   ├── controllers/  # API controllers
+│   │   ├── services/     # Business logic
+│   │   ├── repositories/ # Database layer
+│   │   └── routes/       # API routes
+│   └── package.json
+├── frontend/         # Next.js frontend
+│   ├── app/          # Pages
+│   ├── components/   # React components
+│   ├── lib/          # Utilities
+│   └── package.json
+├── tracking/         # Analytics scripts
+├── infrastructure/   # Docker configs
 └── docs/            # Documentation
+```
+
+## Common Commands
+
+```bash
+# Using Make (easiest)
+make build      # Build Docker images
+make start      # Start services
+make migrate    # Run database migrations
+make seed       # Seed with demo data
+make logs       # View logs
+make stop       # Stop services
+
+# Using Docker Compose
+docker compose up -d              # Start
+docker compose logs -f            # Logs
+docker compose exec backend sh   # Backend shell
+docker compose down              # Stop
 ```
 
 ## Development
@@ -73,8 +114,10 @@ sentrypulse/
 
 ```bash
 cd backend
-composer install
-php artisan serve
+npm install
+npm run dev          # Hot reload with tsx watch
+npm run build        # Build TypeScript
+npm run migrate      # Run migrations
 ```
 
 ### Frontend Development
@@ -82,24 +125,120 @@ php artisan serve
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev          # Start dev server
+npm run build        # Build for production
 ```
 
-### Running Tests
+## API Endpoints
 
-```bash
-# Backend tests
-docker compose exec backend php artisan test
+- `POST /api/auth/register` - Register user
+- `POST /api/auth/login` - Login
+- `GET /api/auth/me` - Get current user
+- `GET /api/monitors` - List monitors
+- `POST /api/monitors` - Create monitor
+- `POST /api/monitors/:id/check` - Run manual check
+- `GET /api/health` - Health check
 
-# Frontend tests
-docker compose exec frontend npm test
+See [docs/api.md](docs/api.md) for complete API documentation.
+
+## Configuration
+
+### Backend (.env)
+
+```env
+NODE_ENV=production
+PORT=8000
+DB_HOST=mysql
+DB_NAME=sentrypulse
+DB_USER=sentrypulse
+DB_PASSWORD=secret
+REDIS_HOST=redis
+JWT_SECRET=your-secret-key
+```
+
+### Frontend (.env.local)
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_APP_NAME=SentryPulse
 ```
 
 ## Documentation
 
-- [API Documentation](./docs/api.md)
-- [Architecture Overview](./docs/architecture.md)
+- [Quick Start](QUICKSTART.md) - Get started in 5 minutes
+- [Setup Guide](SETUP.md) - Detailed setup instructions
+- [API Documentation](docs/api.md) - Complete API reference
+- [Architecture](docs/architecture.md) - System architecture
+- [Node.js Migration](NODEJS_MIGRATION.md) - Backend migration notes
+
+## Features Checklist
+
+✅ Website uptime monitoring (HTTP/HTTPS/DNS/SSL)  
+✅ Automated incident creation and resolution  
+✅ Multi-channel alerting (Email, Telegram, WhatsApp, Webhook)  
+✅ Public status pages  
+✅ Privacy-focused analytics with event tracking  
+✅ Team collaboration with role-based access  
+✅ JWT authentication  
+✅ TypeScript for type safety  
+✅ Docker deployment  
+✅ Health checks  
+✅ Database migrations  
+✅ Comprehensive logging  
+
+## Troubleshooting
+
+### Services won't start
+
+```bash
+docker compose down
+docker compose up -d
+docker compose logs
+```
+
+### Database issues
+
+```bash
+# Check MySQL is ready
+docker compose exec mysql mysqladmin ping
+
+# Re-run migrations
+docker compose exec backend npm run migrate
+```
+
+### Backend errors
+
+```bash
+# Check logs
+docker compose logs backend
+
+# Restart backend
+docker compose restart backend
+
+# Access shell
+docker compose exec backend sh
+```
+
+## Production Deployment
+
+1. Update environment variables for production
+2. Set strong `JWT_SECRET` and database passwords
+3. Configure SSL certificates in nginx
+4. Set up database backups
+5. Configure monitoring and alerts
+
+See [SETUP.md](SETUP.md) for detailed production deployment guide.
 
 ## License
 
 Proprietary - SootheTech © 2025
+
+## Support
+
+- **Documentation**: Check `/docs` folder
+- **Issues**: GitHub Issues
+- **Email**: support@sentrypulse.com
+
+---
+
+**Ready to go!** Run `docker compose up --build` and visit http://localhost:3000 🚀
