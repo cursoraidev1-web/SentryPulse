@@ -7,13 +7,86 @@ Quick comparison of deployment options for SentryPulse.
 | Option | Cost | Difficulty | Best For | Setup Time |
 |--------|------|------------|----------|------------|
 | **Local Docker** | Free | Easy | Development | 5 minutes |
-| **Single VPS** | $5-20/mo | Easy | Small teams | 15 minutes |
-| **AWS EC2 Simple** | $40/mo | Medium | Startups | 30 minutes |
+| **AWS Lambda** ⭐ | **$5-50/mo** | **Medium** | **Variable traffic** | **45 minutes** |
+| **Single VPS** | $12-20/mo | Easy | Small teams | 15 minutes |
+| **AWS EC2 Simple** | $40/mo | Medium | Consistent traffic | 30 minutes |
 | **AWS Production** | $300+/mo | Hard | Enterprise | 2-4 hours |
 | **DigitalOcean** | $10-50/mo | Easy | Medium teams | 20 minutes |
-| **Heroku** | $25-100/mo | Very Easy | Quick launch | 10 minutes |
+| **Heroku** | $50-100/mo | Very Easy | Quick launch | 10 minutes |
 
-## Option 1: Local Development (Docker)
+## Option 1: AWS Lambda (Serverless) ⭐ RECOMMENDED
+
+**Perfect for:** Most use cases, variable traffic, budget-conscious
+
+### Why Lambda?
+
+Lambda is the **best starting point** for SentryPulse because:
+1. **Pay per use** - No idle costs
+2. **Auto-scales** - From 0 to millions
+3. **Cheap** - $5-15/month for typical usage
+4. **No servers** - Zero management
+5. **High availability** - Built-in
+
+### Architecture
+
+```
+CloudFront → API Gateway → Lambda Functions → Aurora Serverless
+                                ↓
+                           SQS Queues
+                                ↓
+                        EventBridge Cron
+```
+
+### Cost Examples
+
+**1,000 users/day**: ~$5-15/month
+- Lambda: $1
+- Aurora Serverless: $45
+- S3 + CloudFront: $2
+
+**10,000 users/day**: ~$30-50/month
+- Lambda: $10
+- Aurora Serverless: $60
+- S3 + CloudFront: $10
+
+**100,000 users/day**: ~$200-300/month
+- Lambda: $100
+- Aurora Serverless: $120
+- S3 + CloudFront: $85
+
+### Setup
+
+```bash
+# Install Serverless Framework
+npm install -g serverless
+
+# Deploy
+cd backend
+serverless deploy --stage prod
+
+# Deploy frontend to S3
+cd frontend
+npm run build
+aws s3 sync out/ s3://your-bucket/
+```
+
+**Pros:**
+- ✅ Extremely cost-effective for variable traffic
+- ✅ Auto-scales instantly
+- ✅ No server management
+- ✅ Built-in high availability
+- ✅ Pay only for actual usage
+
+**Cons:**
+- ❌ Cold starts (1-2 seconds first request)
+- ❌ 15-minute execution limit
+- ❌ Requires architectural changes
+
+**Full Guide:** [AWS_LAMBDA_DEPLOYMENT.md](AWS_LAMBDA_DEPLOYMENT.md)
+
+---
+
+## Option 2: Local Development (Docker)
 
 **Perfect for:** Development and testing
 
@@ -36,7 +109,7 @@ docker compose up --build -d
 
 ---
 
-## Option 2: Single VPS (DigitalOcean, Linode, Vultr)
+## Option 3: Single VPS (DigitalOcean, Linode, Vultr)
 
 **Perfect for:** Small to medium teams, startups
 
@@ -82,7 +155,7 @@ docker compose up -d
 
 ---
 
-## Option 3: AWS Simple (EC2)
+## Option 4: AWS Simple (EC2)
 
 **Perfect for:** Growing startups, need AWS integration
 
@@ -106,7 +179,7 @@ docker compose up -d
 
 ---
 
-## Option 4: AWS Production (ECS, RDS, ElastiCache)
+## Option 5: AWS Production (ECS, RDS, ElastiCache)
 
 **Perfect for:** Enterprise, high-traffic, mission-critical
 
@@ -134,7 +207,7 @@ docker compose up -d
 
 ---
 
-## Option 5: Heroku (Platform as a Service)
+## Option 6: Heroku (Platform as a Service)
 
 **Perfect for:** Quick launch, no DevOps
 
@@ -185,7 +258,7 @@ git push heroku main
 
 ---
 
-## Option 6: Google Cloud Platform
+## Option 7: Google Cloud Platform
 
 **Perfect for:** Google ecosystem users
 
@@ -225,7 +298,7 @@ gcloud run deploy sentrypulse-frontend \
 
 ---
 
-## Option 7: Azure
+## Option 8: Azure
 
 **Perfect for:** Microsoft ecosystem, enterprise
 
@@ -247,7 +320,7 @@ gcloud run deploy sentrypulse-frontend \
 
 ---
 
-## Option 8: Kubernetes (Self-Managed)
+## Option 9: Kubernetes (Self-Managed)
 
 **Perfect for:** Large scale, multi-service deployments
 
@@ -280,25 +353,35 @@ gcloud run deploy sentrypulse-frontend \
 docker compose up -d
 ```
 
+### For Most Use Cases ⭐
+```bash
+# AWS Lambda (Serverless)
+# $5-50/mo, auto-scales, pay per use
+serverless deploy --stage prod
+```
+
 ### For Small Teams (< 1000 users)
 ```bash
 # DigitalOcean Droplet ($12/mo)
 # Single server, Docker Compose
+# Good if you prefer traditional servers
 ```
 
-### For Medium Teams (< 10,000 users)
+### For Consistent High Traffic
 ```bash
 # AWS EC2 Simple ($40/mo)
 # Single EC2 instance, managed backups
+# Better than Lambda if always busy
 ```
 
 ### For Large Scale (10,000+ users)
 ```bash
 # AWS Production ($350/mo)
 # ECS, RDS Multi-AZ, ElastiCache, ALB
+# Enterprise-grade
 ```
 
-### For Quick MVP
+### For Quick MVP (Zero DevOps)
 ```bash
 # Heroku ($50/mo)
 # Zero DevOps, fast deployment
@@ -308,15 +391,17 @@ docker compose up -d
 
 ## Feature Comparison
 
-| Feature | Local | VPS | AWS Simple | AWS Prod | Heroku |
-|---------|-------|-----|------------|----------|--------|
-| High Availability | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Auto Scaling | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Backups | Manual | Manual | Manual | Auto | Auto |
-| SSL | Manual | Manual | ACM | ACM | Auto |
-| Monitoring | Manual | Manual | CloudWatch | CloudWatch | Built-in |
-| Cost Control | ✅ | ✅ | ⚠️ | ❌ | ⚠️ |
-| Setup Time | 5 min | 15 min | 30 min | 4 hrs | 10 min |
+| Feature | Local | Lambda | VPS | AWS Simple | AWS Prod | Heroku |
+|---------|-------|--------|-----|------------|----------|--------|
+| High Availability | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Auto Scaling | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Pay Per Use | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Cold Starts | ❌ | ⚠️ | ❌ | ❌ | ❌ | ❌ |
+| Backups | Manual | Auto | Manual | Manual | Auto | Auto |
+| SSL | Manual | ACM | Manual | ACM | ACM | Auto |
+| Monitoring | Manual | CloudWatch | Manual | CloudWatch | CloudWatch | Built-in |
+| Cost Control | ✅ | ✅ | ✅ | ⚠️ | ❌ | ⚠️ |
+| Setup Time | 5 min | 45 min | 15 min | 30 min | 4 hrs | 10 min |
 
 ---
 
@@ -325,12 +410,12 @@ docker compose up -d
 **Start Small → Scale Up**
 
 1. **Development**: Local Docker
-2. **MVP Launch**: VPS ($12/mo) or Heroku ($50/mo)
-3. **Growing**: AWS EC2 Simple ($40/mo)
-4. **Scale**: AWS Production ($350/mo)
+2. **MVP Launch**: AWS Lambda ($5-15/mo) or VPS ($12/mo)
+3. **Growing**: AWS Lambda ($30-50/mo) - auto-scales for you!
+4. **High Consistent Traffic**: AWS EC2 ($40/mo) or AWS Production ($350/mo)
 5. **Enterprise**: Multi-region, K8s
 
-You can easily migrate between these options as your needs grow!
+**Key Insight**: Lambda scales automatically, so you may never need to migrate! It handles 0-100K users/day seamlessly.
 
 ---
 
@@ -341,17 +426,21 @@ Do you need it in production now?
 │
 ├─ No → Use Local Docker
 │
-└─ Yes → What's your budget?
+└─ Yes → Do you have variable/unpredictable traffic?
     │
-    ├─ < $20/mo → VPS (DigitalOcean)
+    ├─ Yes → AWS Lambda ⭐ ($5-50/mo, auto-scales)
     │
-    ├─ $20-100/mo → AWS EC2 Simple
-    │
-    └─ > $100/mo → Do you need high availability?
+    └─ No (consistent traffic) → What's your budget?
         │
-        ├─ No → AWS EC2 Simple (save money)
+        ├─ < $20/mo → VPS (DigitalOcean)
         │
-        └─ Yes → AWS Production or Heroku
+        ├─ $20-100/mo → AWS EC2 Simple
+        │
+        └─ > $100/mo → Do you need high availability?
+            │
+            ├─ No → AWS EC2 Simple (save money)
+            │
+            └─ Yes → AWS Production or Heroku
 ```
 
 ---
@@ -383,4 +472,4 @@ Do you need it in production now?
 
 ---
 
-**Recommendation:** Start with a **$12/mo DigitalOcean Droplet** for most use cases. Migrate to AWS when you need high availability or have 10,000+ users.
+**Recommendation:** Start with **AWS Lambda** for most use cases. It's cheap ($5-15/mo starting), auto-scales to millions, and requires zero server management. Only use traditional servers (VPS/EC2) if you have consistent high traffic or specific technical requirements.

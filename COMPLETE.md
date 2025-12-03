@@ -67,14 +67,18 @@ docker compose exec backend npm run seed
 - **[SETUP.md](SETUP.md)** - Detailed setup instructions
 
 ### Deployment
-- **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** ⭐ NEW! - Complete AWS guide
+- **[DEPLOYMENT_QUICKSTART.md](DEPLOYMENT_QUICKSTART.md)** ⭐ START HERE! - Choose in 2 minutes
+- **[AWS_LAMBDA_DEPLOYMENT.md](AWS_LAMBDA_DEPLOYMENT.md)** 🔥 RECOMMENDED! - Serverless
+  - Pay per use: $5-50/month for most users
+  - Auto-scales from 0 to millions
+  - Zero server management
+  - 45-minute setup
+- **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** - Traditional AWS (EC2/ECS)
   - Simple EC2 deployment (~$40/month)
   - Production architecture (~$350/month)
   - Step-by-step instructions
-  - Cost estimates
-  - Security best practices
-- **[DEPLOYMENT_OPTIONS.md](DEPLOYMENT_OPTIONS.md)** - Compare all options
-  - Local, VPS, AWS, Heroku, GCP, Azure
+- **[DEPLOYMENT_OPTIONS.md](DEPLOYMENT_OPTIONS.md)** - Compare ALL platforms
+  - Lambda, VPS, AWS, Heroku, GCP, Azure
   - Cost comparison
   - Feature comparison
 
@@ -132,33 +136,45 @@ docker compose exec backend npm run seed
 
 ## 🌐 Deployment Options
 
+### 🏆 Recommended: AWS Lambda (Serverless)
+```bash
+# Best for most users!
+# $5-50/month, auto-scales, zero management
+serverless deploy --stage prod
+# Guide: AWS_LAMBDA_DEPLOYMENT.md
+```
+
+**Why Lambda?**
+- 💰 Pay per use (cheapest for variable traffic)
+- 🚀 Auto-scales from 0 to millions
+- 🛠️ Zero server management
+- 📊 Perfect for SaaS
+
 ### For Development
 ```bash
 docker compose up -d  # Free, 5 minutes
 ```
 
-### For Small Teams
+### For Traditional Servers
 ```bash
-# DigitalOcean Droplet - $12/month, 15 minutes
-```
+# DigitalOcean VPS - $12/month, 15 minutes
+# Good if you prefer managing servers
 
-### For Growing Startups
-```bash
 # AWS EC2 Simple - $40/month, 30 minutes
 # See: AWS_DEPLOYMENT.md
 ```
 
-### For Enterprise
+### For Enterprise (High Availability)
 ```bash
 # AWS Production - $350/month, 2-4 hours
-# High availability, auto-scaling
+# Multi-AZ, auto-scaling, managed services
 # See: AWS_DEPLOYMENT.md
 ```
 
-### For Quick Launch
+### For Quick MVP (Zero DevOps)
 ```bash
 # Heroku - $50/month, 10 minutes
-# Zero DevOps
+# Zero server management
 ```
 
 ---
@@ -280,13 +296,23 @@ npm run dev     # Dev server
 
 ## 💰 Cost Estimates
 
-| Deployment | Monthly Cost | Setup Time |
-|------------|--------------|------------|
-| Local | Free | 5 min |
-| DigitalOcean | $12 | 15 min |
-| AWS Simple | $40 | 30 min |
-| AWS Production | $350 | 2-4 hrs |
-| Heroku | $50-150 | 10 min |
+| Deployment | Monthly Cost | Setup Time | Best For |
+|------------|--------------|------------|----------|
+| Local | Free | 5 min | Development |
+| **Lambda** ⭐ | **$5-50** | **45 min** | **Most users** |
+| DigitalOcean | $12 | 15 min | Traditional servers |
+| AWS EC2 | $40 | 30 min | Consistent traffic |
+| AWS Production | $350 | 2-4 hrs | Enterprise |
+| Heroku | $50-150 | 10 min | Quick MVP |
+
+### Lambda Cost by Traffic
+| Users/Day | Monthly Cost |
+|-----------|--------------|
+| 1,000 | $5-15 |
+| 10,000 | $30-50 |
+| 100,000 | $200-300 |
+
+**Key Advantage:** Lambda scales automatically and you only pay for actual usage!
 
 **See:** [DEPLOYMENT_OPTIONS.md](DEPLOYMENT_OPTIONS.md) for full comparison
 
@@ -381,13 +407,21 @@ docker compose restart backend
 
 ## 📈 Scaling Path
 
+### Modern Path (Recommended)
+1. **Start**: Local Docker (dev)
+2. **Launch**: AWS Lambda ($5-15/mo)
+3. **Grow**: Stay on Lambda! ($30-50/mo) - It auto-scales!
+4. **Massive Scale**: Lambda still works, or migrate to ECS if needed
+5. **Enterprise**: Multi-region Lambda or K8s
+
+### Traditional Path (If you prefer servers)
 1. **Start**: Local Docker (dev)
 2. **Launch**: Single VPS ($12/mo)
 3. **Grow**: AWS EC2 Simple ($40/mo)
 4. **Scale**: AWS Production ($350/mo)
 5. **Enterprise**: Multi-region, K8s
 
-Easy to migrate between stages!
+**Key Insight:** With Lambda, you may never need to migrate! It handles 0-100K users/day seamlessly.
 
 ---
 
@@ -478,4 +512,9 @@ Proprietary - SootheTech © 2025
 **The complete SentryPulse platform is ready to deploy!**  
 **Choose your deployment method and go live!** 🚀
 
-**Recommended:** Start with local Docker for testing, then deploy to DigitalOcean ($12/mo) or AWS EC2 ($40/mo) for production.
+**Recommended Path:**
+1. **Test locally**: `docker compose up -d`
+2. **Deploy to Lambda**: `serverless deploy` (~$5-15/mo)
+3. **Scale automatically**: Lambda handles growth for you!
+
+**Alternative:** DigitalOcean VPS ($12/mo) if you prefer traditional servers.

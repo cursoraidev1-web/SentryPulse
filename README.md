@@ -165,9 +165,17 @@ NEXT_PUBLIC_APP_NAME=SentryPulse
 
 ## Documentation
 
+### Getting Started
 - [Quick Start](QUICKSTART.md) - Get started in 5 minutes
 - [Setup Guide](SETUP.md) - Detailed setup instructions
-- [AWS Deployment](AWS_DEPLOYMENT.md) - Deploy to AWS (EC2, RDS, ECS)
+
+### Deployment
+- [Deployment Quickstart](DEPLOYMENT_QUICKSTART.md) - **Choose in 2 minutes!**
+- [AWS Lambda (Serverless)](AWS_LAMBDA_DEPLOYMENT.md) - **Recommended!** Pay-per-use (~$5-50/mo)
+- [AWS Traditional (EC2/ECS)](AWS_DEPLOYMENT.md) - EC2, RDS, ECS ($40-350/mo)
+- [Deployment Options](DEPLOYMENT_OPTIONS.md) - Compare all platforms
+
+### Technical
 - [API Documentation](docs/api.md) - Complete API reference
 - [Architecture](docs/architecture.md) - System architecture
 - [Node.js Migration](NODEJS_MIGRATION.md) - Backend migration notes
@@ -222,33 +230,57 @@ docker compose exec backend sh
 
 ## Production Deployment
 
-### Deploy to AWS
+### 🚀 Recommended: AWS Lambda (Serverless)
 
-We have a complete AWS deployment guide with two options:
+**Perfect for most users!** Pay only for what you use, automatic scaling.
+
+**Cost:**
+- **1,000 users/day**: ~$5-15/month
+- **10,000 users/day**: ~$30-50/month
+- **100,000 users/day**: ~$200-300/month
+
+**Benefits:**
+✅ Auto-scales from 0 to millions
+✅ Pay per use (no idle costs)
+✅ Zero server management
+✅ Built-in high availability
+
+📖 **Lambda Guide:** [AWS_LAMBDA_DEPLOYMENT.md](AWS_LAMBDA_DEPLOYMENT.md)
+
+### Other AWS Options
 
 **Option 1: Simple EC2 (~$40/month)**
 - Single EC2 instance
 - Docker Compose
-- Perfect for small/medium teams
+- Consistent traffic
 - 30-minute setup
 
 **Option 2: Production Architecture (~$350/month)**
 - ECS/Fargate
 - RDS Multi-AZ
 - ElastiCache Redis
-- Auto-scaling
-- High availability
+- Enterprise-grade
 
-📖 **Full Guide:** [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)
+📖 **EC2/ECS Guide:** [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)
 
-### Other Options
+### Alternative Platforms
 
-- **DigitalOcean/Linode VPS**: $12-50/month
-- **Heroku**: $50-150/month (zero DevOps)
-- **Google Cloud**: ~$60/month
+- **DigitalOcean VPS**: $12/month (simple, reliable)
+- **Heroku**: $50/month (zero DevOps)
+- **Google Cloud Run**: ~$60/month (serverless)
 - **Self-hosted**: Your own server
 
 📖 **Compare All Options:** [DEPLOYMENT_OPTIONS.md](DEPLOYMENT_OPTIONS.md)
+
+### Quick Comparison
+
+| Option | Min Cost | Scaling | Management | Best For |
+|--------|----------|---------|------------|----------|
+| **Lambda** | **$5/mo** | Auto | None | Variable traffic |
+| EC2 Simple | $40/mo | Manual | SSH | Consistent traffic |
+| AWS Production | $350/mo | Auto | Medium | Enterprise |
+| DigitalOcean | $12/mo | Manual | SSH | Startups |
+| Heroku | $50/mo | Auto | None | Quick launch |
 
 ## License
 
