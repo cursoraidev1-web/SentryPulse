@@ -1,0 +1,36 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY backend/package*.json ./
+RUN npm ci
+
+# Copy source
+COPY backend/ ./
+
+# Build TypeScript
+RUN npm run build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Install production dependencies only
+COPY backend/package*.json ./
+RUN npm ci --only=production
+
+# Copy built files
+COPY --from=builder /app/dist ./dist
+COPY backend/.env.example ./.env
+
+# Create logs directory
+RUN mkdir -p logs && chown -R node:node logs
+
+USER node
+
+EXPOSE 8000
+
+CMD ["node", "dist/index.js"]

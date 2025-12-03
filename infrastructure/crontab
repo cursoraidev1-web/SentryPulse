@@ -1,0 +1,9 @@
+# SentryPulse Cron Jobs
+
+# Monitor checks - every minute
+* * * * * cd /var/www/backend && php artisan monitor:run >> storage/logs/monitor-checks.log 2>&1
+
+# Analytics aggregation - daily at 1 AM
+0 1 * * * cd /var/www/backend && php artisan analytics:aggregate >> storage/logs/analytics-aggregate.log 2>&1
+
+# Keep empty line at the end
