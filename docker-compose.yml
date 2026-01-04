@@ -9,7 +9,6 @@ services:
       - "443:443"
     volumes:
       - ./infrastructure/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./backend/public:/var/www/backend/public:ro
       - ./tracking:/var/www/tracking:ro
     depends_on:
       - backend
@@ -20,19 +19,26 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: ../infrastructure/Dockerfile.backend
+      context: .
+      dockerfile: infrastructure/Dockerfile.backend
     container_name: sentrypulse-backend
     volumes:
-      - ./backend:/var/www/backend
-      - ./backend/storage/logs:/var/www/backend/storage/logs
+      - ./backend:/app
+      - ./backend/logs:/app/logs
     environment:
-      - APP_ENV=production
-      - DB_HOST=mysql
-      - DB_DATABASE=sentrypulse
-      - DB_USERNAME=sentrypulse
-      - DB_PASSWORD=secret
-      - REDIS_HOST=redis
+      NODE_ENV: production
+      PORT: 8000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: sentrypulse
+      DB_USERNAME: sentrypulse
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-secret-key-change-this-in-production
+      JWT_TTL: 1440
+    ports:
+      - "8000:8000"
     depends_on:
       - mysql
       - redis
@@ -42,11 +48,15 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: ../infrastructure/Dockerfile.frontend
+      context: .
+      dockerfile: infrastructure/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:8000/api
+        NEXT_PUBLIC_TRACKING_URL: http://nginx/tracker.js
     container_name: sentrypulse-frontend
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      NEXT_PUBLIC_API_URL: http://backend:8000/api
+      NEXT_PUBLIC_TRACKING_URL: http://nginx/tracker.js
     ports:
       - "3000:3000"
     networks:
@@ -57,10 +67,10 @@ services:
     image: mysql:8.0
     container_name: sentrypulse-mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=rootsecret
-      - MYSQL_DATABASE=sentrypulse
-      - MYSQL_USER=sentrypulse
-      - MYSQL_PASSWORD=secret
+      MYSQL_ROOT_PASSWORD: rootsecret
+      MYSQL_DATABASE: sentrypulse
+      MYSQL_USER: sentrypulse
+      MYSQL_PASSWORD: secret
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
@@ -83,19 +93,22 @@ services:
 
   queue:
     build:
-      context: ./backend
-      dockerfile: ../infrastructure/Dockerfile.backend
+      context: .
+      dockerfile: infrastructure/Dockerfile.backend
     container_name: sentrypulse-queue
-    command: php artisan queue:work --sleep=3 --tries=3
+    command: node scripts/queue.js
     volumes:
-      - ./backend:/var/www/backend
+      - ./backend:/app
     environment:
-      - APP_ENV=production
-      - DB_HOST=mysql
-      - DB_DATABASE=sentrypulse
-      - DB_USERNAME=sentrypulse
-      - DB_PASSWORD=secret
-      - REDIS_HOST=redis
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: sentrypulse
+      DB_USERNAME: sentrypulse
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-secret-key-change-this-in-production
     depends_on:
       - mysql
       - redis
@@ -105,19 +118,22 @@ services:
 
   cron:
     build:
-      context: ./backend
-      dockerfile: ../infrastructure/Dockerfile.backend
+      context: .
+      dockerfile: infrastructure/Dockerfile.backend
     container_name: sentrypulse-cron
     volumes:
-      - ./backend:/var/www/backend
+      - ./backend:/app
       - ./infrastructure/crontab:/etc/crontabs/root:ro
     environment:
-      - APP_ENV=production
-      - DB_HOST=mysql
-      - DB_DATABASE=sentrypulse
-      - DB_USERNAME=sentrypulse
-      - DB_PASSWORD=secret
-      - REDIS_HOST=redis
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: sentrypulse
+      DB_USERNAME: sentrypulse
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-secret-key-change-this-in-production
     depends_on:
       - mysql
       - redis

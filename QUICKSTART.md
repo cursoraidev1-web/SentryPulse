@@ -4,44 +4,131 @@ Get up and running in 5 minutes! 🚀
 
 ## Prerequisites
 
-- Docker & Docker Compose installed
-- Ports 80, 3000, 3306, 6379, 8000 available
+- **Node.js** 18+ installed
+- **PostgreSQL** 12+ installed and running
+- **Redis** installed and running (optional, for queues)
+- Ports 3000, 8000 available
 
-## Installation
+## Installation (Without Docker)
+
+### 1. Install Dependencies
 
 ```bash
-# 1. Clone repository
-git clone <repository-url>
-cd sentrypulse
+# Backend
+cd backend
+npm install
 
-# 2. Copy environment files
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local
+# Frontend
+cd ../frontend
+npm install
+```
 
-# 3. Generate keys (optional but recommended)
-# APP_KEY and JWT_SECRET in backend/.env
+### 2. Set Up Database
 
-# 4. Start everything
-docker compose up --build -d
+Create a PostgreSQL database:
 
-# 5. Wait for services to be ready (about 30 seconds)
-sleep 30
+```bash
+# Connect to PostgreSQL
+psql -U postgres
 
-# 6. Run database migrations
-docker compose exec backend php artisan migrate
+# Create database and user
+CREATE DATABASE sentrypulse;
+CREATE USER sentrypulse WITH PASSWORD 'secret';
+GRANT ALL PRIVILEGES ON DATABASE sentrypulse TO sentrypulse;
+\q
+```
 
-# 7. Seed with demo data
-docker compose exec backend php artisan db:seed
+### 3. Configure Environment
+
+```bash
+# Backend
+cd backend
+cp env.example.txt .env
+# Edit .env with your database credentials
+
+# Frontend
+cd ../frontend
+cp .env.example .env.local
+# Edit .env.local with your API URL (http://localhost:8000/api)
+```
+
+**Backend `.env` example:**
+```env
+NODE_ENV=development
+PORT=8000
+APP_URL=http://localhost:8000
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=sentrypulse
+DB_USERNAME=postgres
+DB_PASSWORD=secret
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+JWT_SECRET=your-secret-key-change-this-in-production
+JWT_TTL=1440
+
+FRONTEND_URL=http://localhost:3000
+```
+
+**Frontend `.env.local` example:**
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_TRACKING_URL=http://localhost:8000/tracker.js
+```
+
+### 4. Run Database Migrations
+
+You'll need to run the SQL migrations manually. The migration files are in `backend/database/migrations/`. Run them in order:
+
+```bash
+# Option 1: Use PostgreSQL command line
+psql -U postgres -d sentrypulse -f backend/database/migrations/2024_01_01_000001_create_users_table.sql
+
+# Option 2: Use a migration script (if you create one)
+cd backend
+node scripts/migrate.js
+```
+
+### 5. Start Services
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+npm start
+# or for development with auto-reload
+npm run dev
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+**Terminal 3 - Queue Worker (optional):**
+```bash
+cd backend
+npm run queue
+```
+
+**Terminal 4 - Monitor Checks (optional, for cron):**
+```bash
+cd backend
+npm run monitor
 ```
 
 ## Access
 
 - **Dashboard**: http://localhost:3000
 - **API**: http://localhost:8000/api
-- **Tracker**: http://localhost/tracker.js
+- **Health Check**: http://localhost:8000/health
 
 ## Default Login
 
+After running migrations and seeding:
 ```
 Email: admin@sentrypulse.com
 Password: password
@@ -52,36 +139,18 @@ Password: password
 ## Quick Commands
 
 ```bash
-# View logs
-docker compose logs -f
+# Backend
+cd backend
+npm start          # Start server
+npm run dev        # Development mode with auto-reload
+npm run queue      # Start queue worker
+npm run monitor    # Run monitor checks
 
-# Stop services
-docker compose down
-
-# Restart services
-docker compose restart
-
-# Check status
-docker compose ps
-
-# Run migrations
-docker compose exec backend php artisan migrate
-
-# Clear cache
-docker compose exec backend php artisan cache:clear
-```
-
-## Using Make (Easier!)
-
-```bash
-make help      # Show all commands
-make build     # Build images
-make start     # Start services
-make stop      # Stop services
-make logs      # View logs
-make migrate   # Run migrations
-make seed      # Seed database
-make clean     # Remove everything
+# Frontend
+cd frontend
+npm run dev        # Development server
+npm run build      # Production build
+npm start          # Production server
 ```
 
 ## First Steps After Login
@@ -110,28 +179,44 @@ make clean     # Remove everything
 
 ## Troubleshooting
 
-### Services won't start
+### Backend won't start
 ```bash
-# Check for port conflicts
-docker compose down
-docker compose up -d
-docker compose logs
+# Check if port 8000 is in use
+netstat -ano | findstr :8000  # Windows
+lsof -i :8000                  # Mac/Linux
+
+# Check database connection
+psql -U postgres -d sentrypulse -c "SELECT 1"
 ```
 
 ### Database connection error
 ```bash
-# Wait longer for MySQL to start
-sleep 10
-docker compose exec backend php artisan migrate
+# Verify MySQL is running
+mysql -u sentrypulse -p sentrypulse
+
+# Check .env has correct credentials
+cat backend/.env
 ```
 
 ### Frontend can't reach API
 ```bash
 # Check backend is running
-curl http://localhost:8000/api/auth/me
+curl http://localhost:8000/health
 
 # Verify .env.local has correct API_URL
 cat frontend/.env.local
+```
+
+### Module not found errors
+```bash
+# Reinstall dependencies
+cd backend
+rm -rf node_modules package-lock.json
+npm install
+
+cd ../frontend
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 ## Production Deployment
@@ -139,9 +224,8 @@ cat frontend/.env.local
 For production use:
 
 1. Update `backend/.env`:
-   - Set `APP_ENV=production`
-   - Set `APP_DEBUG=false`
-   - Generate strong `APP_KEY` and `JWT_SECRET`
+   - Set `NODE_ENV=production`
+   - Generate strong `JWT_SECRET`
    - Configure real database credentials
    - Set up mail server
 
@@ -149,11 +233,22 @@ For production use:
    - Set production API URL
    - Set production domain
 
-3. Configure SSL:
-   - Add certificates to nginx config
-   - Update nginx.conf for HTTPS
+3. Build frontend:
+   ```bash
+   cd frontend
+   npm run build
+   npm start
+   ```
 
-4. Set up backups:
+4. Use a process manager (PM2 recommended):
+   ```bash
+   npm install -g pm2
+   cd backend
+   pm2 start server.js --name sentrypulse-api
+   pm2 start scripts/queue.js --name sentrypulse-queue
+   ```
+
+5. Set up backups:
    - Database backups
    - Configuration backups
 

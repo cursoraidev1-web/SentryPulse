@@ -6,18 +6,24 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
+import LoadingModal from '@/components/LoadingModal';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function MonitorsPage() {
   const { user, loading } = useAuth(true);
   const [monitors, setMonitors] = useState<any[]>([]);
   const [teamId, setTeamId] = useState<number | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     const loadMonitors = async () => {
       const token = auth.getToken();
-      if (!token) return;
+      if (!token) {
+        setDataLoading(false);
+        return;
+      }
 
+      setDataLoading(true);
       try {
         const teamsResponse: any = await api.teams.list(token);
         const teams = teamsResponse.data?.teams || [];
@@ -31,11 +37,15 @@ export default function MonitorsPage() {
         }
       } catch (error) {
         console.error('Failed to load monitors:', error);
+      } finally {
+        setDataLoading(false);
       }
     };
 
     if (!loading && user) {
       loadMonitors();
+    } else if (!loading && !user) {
+      setDataLoading(false);
     }
   }, [loading, user]);
 
@@ -51,6 +61,7 @@ export default function MonitorsPage() {
 
   return (
     <DashboardLayout>
+      <LoadingModal isOpen={dataLoading} message="Loading monitors..." />
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

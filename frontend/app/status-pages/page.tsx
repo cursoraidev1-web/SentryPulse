@@ -6,18 +6,24 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
+import LoadingModal from '@/components/LoadingModal';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function StatusPagesPage() {
   const { user, loading } = useAuth(true);
   const [statusPages, setStatusPages] = useState<any[]>([]);
   const [teamId, setTeamId] = useState<number | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     const loadStatusPages = async () => {
       const token = auth.getToken();
-      if (!token) return;
+      if (!token) {
+        setDataLoading(false);
+        return;
+      }
 
+      setDataLoading(true);
       try {
         const teamsResponse: any = await api.teams.list(token);
         const teams = teamsResponse.data?.teams || [];
@@ -31,11 +37,15 @@ export default function StatusPagesPage() {
         }
       } catch (error) {
         console.error('Failed to load status pages:', error);
+      } finally {
+        setDataLoading(false);
       }
     };
 
     if (!loading && user) {
       loadStatusPages();
+    } else if (!loading && !user) {
+      setDataLoading(false);
     }
   }, [loading, user]);
 
@@ -51,6 +61,7 @@ export default function StatusPagesPage() {
 
   return (
     <DashboardLayout>
+      <LoadingModal isOpen={dataLoading} message="Loading status pages..." />
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -96,12 +107,12 @@ export default function StatusPagesPage() {
                     </div>
                     <div className="mt-2">
                       <a
-                        href={`${window.location.origin}/status/${page.slug}`}
+                        href={`/status/${page.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-primary-600 hover:text-primary-700"
+                        className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                       >
-                        {window.location.origin}/status/{page.slug}
+                        View Status Page
                       </a>
                     </div>
                   </div>

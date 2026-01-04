@@ -1,49 +1,32 @@
-FROM php:8.2-fpm-alpine
+FROM node:20-alpine
 
 RUN apk add --no-cache \
     curl \
     git \
-    zip \
-    unzip \
-    libzip-dev \
-    icu-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    oniguruma-dev \
-    mysql-client \
-    supervisor
+    python3 \
+    make \
+    g++
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install \
-    pdo \
-    pdo_mysql \
-    mysqli \
-    mbstring \
-    zip \
-    gd \
-    intl \
-    opcache \
-    pcntl \
-    bcmath
+WORKDIR /app
 
-RUN pecl install redis && docker-php-ext-enable redis
+# Copy package files
+COPY backend/package*.json ./
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install dependencies
+RUN npm ci --only=production
 
-WORKDIR /var/www/backend
-
-COPY backend/composer.json backend/composer.lock* ./
-RUN composer install --no-dev --optimize-autoloader --no-scripts || true
-
+# Copy application code
 COPY backend .
 
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
-    && chmod -R 775 storage \
-    && chown -R www-data:www-data storage
+# Create logs directory
+RUN mkdir -p logs
 
-RUN composer dump-autoload --optimize
+# Expose port
+EXPOSE 8000
 
-EXPOSE 9000
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["php-fpm"]
+# Start the application
+CMD ["node", "server.js"]

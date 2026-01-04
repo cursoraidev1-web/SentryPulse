@@ -195,6 +195,11 @@ export const api = {
       }),
   },
 
+  users: {
+    search: (token: string, email: string) =>
+      fetcher(`/users/search?email=${encodeURIComponent(email)}`, { token }),
+  },
+
   analytics: {
     sites: {
       list: (token: string, teamId: number) =>
@@ -226,5 +231,35 @@ export const api = {
       stats: (token: string, id: number, startDate: string, endDate: string) =>
         fetcher(`/analytics/sites/${id}/stats?start_date=${startDate}&end_date=${endDate}`, { token }),
     },
+  },
+
+  billing: {
+    updatePlan: (token: string, teamId: number, plan: string) =>
+      fetcher(`/billing/plan`, {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ team_id: teamId, plan }),
+      }),
+
+    usage: (token: string, teamId: number) =>
+      fetcher(`/billing/usage?team_id=${teamId}`, { token }),
+  },
+
+  apiKeys: {
+    list: (token: string, teamId: number) =>
+      fetcher(`/api-keys?team_id=${teamId}`, { token }),
+
+    create: (token: string, data: { team_id: number; name: string }) =>
+      fetcher('/api-keys', {
+        method: 'POST',
+        token,
+        body: JSON.stringify(data),
+      }),
+
+    delete: (token: string, id: number) =>
+      fetcher(`/api-keys/${id}`, {
+        method: 'DELETE',
+        token,
+      }),
   },
 };

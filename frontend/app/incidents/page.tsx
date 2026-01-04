@@ -6,17 +6,23 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
+import LoadingModal from '@/components/LoadingModal';
 
 export default function IncidentsPage() {
   const { user, loading } = useAuth(true);
   const [incidents, setIncidents] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>('all');
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     const loadIncidents = async () => {
       const token = auth.getToken();
-      if (!token) return;
+      if (!token) {
+        setDataLoading(false);
+        return;
+      }
 
+      setDataLoading(true);
       try {
         const teamsResponse: any = await api.teams.list(token);
         const teams = teamsResponse.data?.teams || [];
@@ -30,11 +36,15 @@ export default function IncidentsPage() {
         }
       } catch (error) {
         console.error('Failed to load incidents:', error);
+      } finally {
+        setDataLoading(false);
       }
     };
 
     if (!loading && user) {
       loadIncidents();
+    } else if (!loading && !user) {
+      setDataLoading(false);
     }
   }, [loading, user, filter]);
 
@@ -78,6 +88,7 @@ export default function IncidentsPage() {
 
   return (
     <DashboardLayout>
+      <LoadingModal isOpen={dataLoading} message="Loading incidents..." />
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Incidents</h1>
