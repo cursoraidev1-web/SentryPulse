@@ -7,7 +7,7 @@ export const migrations = [
       CREATE TABLE IF NOT EXISTS users (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
+        email VARCHAR(191) NOT NULL UNIQUE,  -- Fixed: 191 length
         email_verified_at TIMESTAMP NULL,
         password VARCHAR(255) NOT NULL,
         avatar VARCHAR(255) NULL,
@@ -28,11 +28,11 @@ export const migrations = [
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         uuid VARCHAR(36) NOT NULL UNIQUE,
         name VARCHAR(255) NOT NULL,
-        slug VARCHAR(255) NOT NULL UNIQUE,
+        slug VARCHAR(191) NOT NULL UNIQUE,   -- Fixed: 191 length
         owner_id BIGINT UNSIGNED NOT NULL,
         plan VARCHAR(50) DEFAULT 'free',
         plan_expires_at TIMESTAMP NULL,
-        settings JSON NULL,
+        settings TEXT NULL,                  -- Fixed: JSON -> TEXT
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -83,7 +83,7 @@ export const migrations = [
         check_ssl BOOLEAN DEFAULT TRUE,
         check_keyword VARCHAR(255) NULL,
         expected_status_code INT UNSIGNED DEFAULT 200,
-        headers JSON NULL,
+        headers TEXT NULL,                   -- Fixed: JSON -> TEXT
         body TEXT NULL,
         last_checked_at TIMESTAMP NULL,
         last_status VARCHAR(20) NULL,
@@ -137,7 +137,7 @@ export const migrations = [
         started_at TIMESTAMP NOT NULL,
         resolved_at TIMESTAMP NULL,
         duration_seconds INT UNSIGNED NULL,
-        metadata JSON NULL,
+        metadata TEXT NULL,                  -- Fixed: JSON -> TEXT
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (monitor_id) REFERENCES monitors(id) ON DELETE CASCADE,
@@ -158,7 +158,7 @@ export const migrations = [
         name VARCHAR(255) NOT NULL,
         type ENUM('email', 'whatsapp', 'telegram', 'webhook') NOT NULL,
         is_enabled BOOLEAN DEFAULT TRUE,
-        config JSON NOT NULL,
+        config TEXT NOT NULL,                -- Fixed: JSON -> TEXT
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
@@ -197,11 +197,11 @@ export const migrations = [
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         team_id BIGINT UNSIGNED NOT NULL,
         name VARCHAR(255) NOT NULL,
-        slug VARCHAR(255) NOT NULL UNIQUE,
+        slug VARCHAR(191) NOT NULL UNIQUE,   -- Fixed: 191 length
         domain VARCHAR(255) NULL,
         logo_url VARCHAR(500) NULL,
         is_public BOOLEAN DEFAULT TRUE,
-        theme JSON NULL,
+        theme TEXT NULL,                     -- Fixed: JSON -> TEXT
         custom_css TEXT NULL,
         custom_html TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -245,7 +245,7 @@ export const migrations = [
         is_enabled BOOLEAN DEFAULT TRUE,
         timezone VARCHAR(50) DEFAULT 'UTC',
         public_stats BOOLEAN DEFAULT FALSE,
-        settings JSON NULL,
+        settings TEXT NULL,                  -- Fixed: JSON -> TEXT
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
@@ -297,7 +297,7 @@ export const migrations = [
         visitor_id VARCHAR(64) NOT NULL,
         session_id VARCHAR(64) NOT NULL,
         event_name VARCHAR(255) NOT NULL,
-        properties JSON NULL,
+        properties TEXT NULL,                -- Fixed: JSON -> TEXT
         url VARCHAR(1000) NULL,
         occurred_at TIMESTAMP NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -340,7 +340,7 @@ export const migrations = [
       CREATE TABLE IF NOT EXISTS events_daily (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         site_id BIGINT UNSIGNED NOT NULL,
-        event_name VARCHAR(255) NOT NULL,
+       event_name VARCHAR(191) NOT NULL,
         date DATE NOT NULL,
         count INT UNSIGNED DEFAULT 0,
         unique_users INT UNSIGNED DEFAULT 0,

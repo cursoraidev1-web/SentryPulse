@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { config } from './config/env';
 import routes from './routes';
 import { logger } from './utils/logger';
+import { startScheduler } from './services/Scheduler'; // <--- 1. Import the Scheduler
 
 const app = express();
 
@@ -46,6 +47,9 @@ app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Environment: ${config.env}`);
   logger.info(`API available at http://localhost:${PORT}/api`);
+  
+  // <--- 2. Start the Engine
+  startScheduler(); 
 });
 
 export default app;

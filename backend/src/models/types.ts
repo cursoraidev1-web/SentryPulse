@@ -34,7 +34,7 @@ export interface Monitor {
   interval: number;
   timeout: number;
   status: 'up' | 'down' | 'paused';
-  is_enabled: boolean;
+  is_enabled: boolean; // Note: We will use this instead of 'active'
   check_ssl: boolean;
   check_keyword: string | null;
   expected_status_code: number;

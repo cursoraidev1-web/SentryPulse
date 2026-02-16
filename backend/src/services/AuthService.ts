@@ -47,7 +47,9 @@ export class AuthService {
 
   async validateToken(token: string): Promise<User | null> {
     try {
-      const decoded = jwt.verify(token, config.jwt.secret) as any;
+      // Use fallback for secret here too just in case
+      const secret = config.jwt.secret || 'default-secret-key';
+      const decoded = jwt.verify(token, secret) as any;
       return this.userRepository.findById(decoded.sub);
     } catch (error) {
       return null;
@@ -55,16 +57,19 @@ export class AuthService {
   }
 
   private generateToken(user: User): string {
+    const secret = config.jwt.secret || 'default-secret-key';
+    const expiresIn = config.jwt.expiresIn || '7d';
+
     return jwt.sign(
       {
         sub: user.id,
         email: user.email,
       },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      secret,
+      // We cast this object to jwt.SignOptions to solve the type mismatch
+      { expiresIn: expiresIn } as jwt.SignOptions
     );
   }
-
   async getUser(id: number): Promise<User | null> {
     return this.userRepository.findById(id);
   }

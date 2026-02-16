@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react'; // <--- Added useEffect
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -34,7 +34,15 @@ const navigation = [
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // 1. Add state to track if we are on the client
+  const [mounted, setMounted] = useState(false);
   const user = auth.getUser();
+
+  // 2. Set mounted to true only after the component loads in the browser
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     auth.logout();
@@ -116,12 +124,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex items-center">
                 <div>
                   <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
-                    {user?.name?.[0] || 'U'}
+                    {/* 3. Safe Render: Only show user initial if mounted, otherwise fallback to 'U' */}
+                    {(mounted && user?.name?.[0]) || 'U'}
                   </div>
                 </div>
                 <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{user?.name}</p>
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{user?.email}</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {/* 4. Safe Render for Name */}
+                    {mounted ? user?.name : 'User'}
+                  </p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    {/* 5. Safe Render for Email */}
+                    {mounted ? user?.email : ''}
+                  </p>
                 </div>
                 <button
                   onClick={handleLogout}

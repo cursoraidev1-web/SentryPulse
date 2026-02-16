@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 export const uuid = (): string => {
@@ -5,16 +6,16 @@ export const uuid = (): string => {
 };
 
 export const hashPassword = async (password: string): Promise<string> => {
-  const bcrypt = await import('bcryptjs');
+  // 10 is the number of salt rounds
   return bcrypt.hash(password, 10);
 };
 
 export const comparePassword = async (password: string, hash: string): Promise<boolean> => {
-  const bcrypt = await import('bcryptjs');
   return bcrypt.compare(password, hash);
 };
 
 export const now = (): string => {
+  // Returns 'YYYY-MM-DD HH:MM:SS' format for MySQL
   return new Date().toISOString().slice(0, 19).replace('T', ' ');
 };
 

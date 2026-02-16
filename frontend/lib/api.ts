@@ -79,11 +79,11 @@ export const api = {
         body: JSON.stringify(data),
       }),
 
-    addMember: (token: string, teamId: number, userId: number, role: string) =>
+    addMember: (token: string, teamId: number, email: string, role: string = 'member') =>
       fetcher(`/teams/${teamId}/members`, {
         method: 'POST',
         token,
-        body: JSON.stringify({ user_id: userId, role }),
+        body: JSON.stringify({ email, role }),
       }),
 
     removeMember: (token: string, teamId: number, userId: number) =>
@@ -92,7 +92,7 @@ export const api = {
         token,
       }),
   },
-
+  
   monitors: {
     list: (token: string, teamId: number) =>
       fetcher(`/monitors?team_id=${teamId}`, { token }),
@@ -200,8 +200,11 @@ export const api = {
       list: (token: string, teamId: number) =>
         fetcher(`/analytics/sites?team_id=${teamId}`, { token }),
 
+      // <--- THIS IS THE FIX ---
+      // We use 'site' (singular) here to match the backend route: router.get('/analytics/site/:id')
       get: (token: string, id: number) =>
-        fetcher(`/analytics/sites/${id}`, { token }),
+        fetcher(`/analytics/site/${id}`, { token }),
+      // -----------------------
 
       create: (token: string, data: any) =>
         fetcher('/analytics/sites', {
