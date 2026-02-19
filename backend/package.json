@@ -12,7 +12,9 @@
     "queue:work": "tsx src/cli/queue-worker.ts",
     "monitor:run": "tsx src/cli/monitor-run.ts",
     "scheduler": "ts-node src/services/Scheduler.ts",
-    "analytics:aggregate": "tsx src/cli/analytics-aggregate.ts"
+    "analytics:aggregate": "tsx src/cli/analytics-aggregate.ts",
+    "test": "jest --forceExit",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "monitoring",
@@ -45,8 +47,14 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.11.16",
     "@types/node-cron": "^3.0.11",
+    "@types/uuid": "^10.0.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/jest": "^29.5.12",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5"
   }
 }

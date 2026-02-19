@@ -9,6 +9,7 @@ const helmet_1 = __importDefault(require("helmet"));
 const env_1 = require("./config/env");
 const routes_1 = __importDefault(require("./routes"));
 const logger_1 = require("./utils/logger");
+const Scheduler_1 = require("./services/Scheduler"); // <--- 1. Import the Scheduler
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, helmet_1.default)());
@@ -42,6 +43,8 @@ app.listen(PORT, () => {
     logger_1.logger.info(`Server running on port ${PORT}`);
     logger_1.logger.info(`Environment: ${env_1.config.env}`);
     logger_1.logger.info(`API available at http://localhost:${PORT}/api`);
+    // <--- 2. Start the Engine
+    (0, Scheduler_1.startScheduler)();
 });
 exports.default = app;
 //# sourceMappingURL=index.js.map

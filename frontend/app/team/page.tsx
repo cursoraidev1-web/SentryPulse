@@ -39,7 +39,7 @@ export default function TeamPage() {
 
     try {
       const teamsResponse: any = await api.teams.list(token);
-      const teams = teamsResponse.data?.teams || [];
+      const teams = Array.isArray(teamsResponse.data) ? teamsResponse.data : (teamsResponse.data?.teams || []);
       
       if (teams.length > 0) {
         const currentTeam = teams[0];
@@ -70,6 +70,7 @@ export default function TeamPage() {
     if (!newTeamName.trim()) return;
 
     const token = auth.getToken();
+    if (!token) return;
     setIsCreating(true);
     try {
       const res: any = await api.teams.create(token, { name: newTeamName });
@@ -89,6 +90,7 @@ export default function TeamPage() {
     if (!inviteEmail.trim()) return;
 
     const token = auth.getToken();
+    if (!token) return;
     setIsInviting(true);
     try {
       // API call using the fix we made in api.ts

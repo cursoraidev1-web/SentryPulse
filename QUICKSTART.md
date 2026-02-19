@@ -27,11 +27,11 @@ docker compose up --build -d
 # 5. Wait for services to be ready (about 30 seconds)
 sleep 30
 
-# 6. Run database migrations
-docker compose exec backend php artisan migrate
+# 6. Run database migrations (Node.js backend)
+docker compose exec backend npm run migrate
 
 # 7. Seed with demo data
-docker compose exec backend php artisan db:seed
+docker compose exec backend npm run seed
 ```
 
 ## Access
@@ -65,10 +65,10 @@ docker compose restart
 docker compose ps
 
 # Run migrations
-docker compose exec backend php artisan migrate
+docker compose exec backend npm run migrate
 
-# Clear cache
-docker compose exec backend php artisan cache:clear
+# Clear Redis cache
+docker compose exec redis redis-cli FLUSHALL
 ```
 
 ## Using Make (Easier!)
@@ -122,7 +122,7 @@ docker compose logs
 ```bash
 # Wait longer for MySQL to start
 sleep 10
-docker compose exec backend php artisan migrate
+docker compose exec backend npm run migrate
 ```
 
 ### Frontend can't reach API

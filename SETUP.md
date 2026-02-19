@@ -21,7 +21,7 @@ cd sentrypulse
 
 ### 2. Environment Configuration
 
-#### Backend Configuration
+#### Backend Configuration (Node.js)
 
 ```bash
 cd backend
@@ -31,44 +31,30 @@ cp .env.example .env
 Edit `backend/.env` and update the following values:
 
 ```env
-APP_NAME=SentryPulse
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://your-domain.com
-
-# Generate a random 32-character string
-APP_KEY=base64:YOUR_GENERATED_KEY_HERE
+NODE_ENV=production
+PORT=8000
 
 # Database
-DB_CONNECTION=mysql
 DB_HOST=mysql
 DB_PORT=3306
-DB_DATABASE=sentrypulse
-DB_USERNAME=sentrypulse
+DB_NAME=sentrypulse
+DB_USER=sentrypulse
 DB_PASSWORD=CHANGE_THIS_PASSWORD
 
 # Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
 
-# Email
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=your-username
-MAIL_PASSWORD=your-password
-MAIL_FROM_ADDRESS=noreply@sentrypulse.com
-
 # JWT
 JWT_SECRET=YOUR_JWT_SECRET_HERE
-JWT_TTL=60
+JWT_EXPIRES_IN=1h
 
-# Optional: Telegram
-TELEGRAM_BOT_TOKEN=your-bot-token
-
-# Optional: WhatsApp
-WHATSAPP_API_URL=your-whatsapp-api-url
-WHATSAPP_API_KEY=your-api-key
+# Optional: Email, Telegram, WhatsApp (see backend/.env.example)
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+TELEGRAM_BOT_TOKEN=
+WHATSAPP_API_URL=
+WHATSAPP_API_KEY=
 ```
 
 #### Frontend Configuration
@@ -110,11 +96,9 @@ make seed
 # Build and start services
 docker compose up --build -d
 
-# Run migrations
-docker compose exec backend php artisan migrate
-
-# Seed database
-docker compose exec backend php artisan db:seed
+# Wait for MySQL (~15 sec), then run migrations and seed
+docker compose exec backend npm run migrate
+docker compose exec backend npm run seed
 ```
 
 #### Option C: Using Shell Scripts
@@ -148,22 +132,22 @@ After seeding the database:
 
 ## Development Setup
 
-### Backend Development
+### Backend Development (Node.js)
 
 ```bash
 cd backend
 
 # Install dependencies
-composer install
+npm install
 
 # Run migrations
-php artisan migrate
+npm run migrate
 
 # Seed database
-php artisan db:seed
+npm run seed
 
 # Start development server
-php artisan serve
+npm run dev
 ```
 
 ### Frontend Development
@@ -182,19 +166,14 @@ npm run dev
 
 ```bash
 cd backend
-php artisan queue:work
+npm run queue:work
 ```
 
 ### Monitor Checks (Development)
 
 ```bash
 cd backend
-
-# Run once
-php artisan monitor:run
-
-# Or use watch mode
-watch -n 60 php artisan monitor:run
+npm run monitor:run
 ```
 
 ## Production Deployment
@@ -279,8 +258,8 @@ docker compose ps mysql
 # Check MySQL logs
 docker compose logs mysql
 
-# Test connection
-docker compose exec backend php artisan db:show
+# Test connection (from backend container)
+docker compose exec backend node -e "require('./dist/config/database').getPool().query('SELECT 1')"
 ```
 
 ### Queue Not Processing
@@ -292,8 +271,8 @@ docker compose logs queue
 # Restart queue worker
 docker compose restart queue
 
-# Check queue size
-docker compose exec backend php artisan queue:monitor
+# Check queue (Redis)
+docker compose exec redis redis-cli LLEN bull:monitor-checks:wait
 ```
 
 ### Monitor Checks Not Running
@@ -303,10 +282,7 @@ docker compose exec backend php artisan queue:monitor
 docker compose logs cron
 
 # Manually run check
-docker compose exec backend php artisan monitor:run
-
-# Check crontab
-docker compose exec cron cat /etc/crontabs/root
+docker compose exec backend npm run monitor:run
 ```
 
 ### Frontend Build Issues
@@ -372,27 +348,21 @@ docker compose build
 docker compose up -d
 
 # Run migrations
-docker compose exec backend php artisan migrate
+docker compose exec backend npm run migrate
 ```
 
 ### Clear Cache
 
 ```bash
-# Clear application cache
-docker compose exec backend php artisan cache:clear
-
-# Clear Redis
+# Clear Redis cache
 docker compose exec redis redis-cli FLUSHALL
 ```
 
 ### Database Maintenance
 
 ```bash
-# Optimize database
-docker compose exec backend php artisan db:optimize
-
-# Clean old data
-docker compose exec backend php artisan db:clean --days=90
+# Database maintenance: run migrations and backups as needed
+docker compose exec backend npm run migrate
 ```
 
 ## Security Checklist

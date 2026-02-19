@@ -60,8 +60,8 @@ export default function MonitorsPage() {
     e.stopPropagation();
     
     if (!confirm('Are you sure you want to delete this monitor?')) return;
-    
     const token = auth.getToken();
+    if (!token) return;
     try {
       await api.monitors.delete(token, id);
       toast.success('Monitor deleted');

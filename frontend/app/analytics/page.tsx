@@ -46,12 +46,12 @@ export default function AnalyticsPage() {
   // 2. Load Sites whenever Selected Team Changes
   useEffect(() => {
     const loadSites = async () => {
-      if (!selectedTeamId) return;
-      const token = auth.getToken();
-      
+      const tid = selectedTeamId;
+      if (!tid || !auth.getToken()) return;
+      const token = auth.getToken()!;
       setDataLoading(true);
       try {
-        const sitesRes: any = await api.analytics.sites.list(token, selectedTeamId);
+        const sitesRes: any = await api.analytics.sites.list(token, tid);
         const rawSites = sitesRes.data;
         const siteList = Array.isArray(rawSites) ? rawSites : (rawSites?.sites || []);
         setSites(siteList);

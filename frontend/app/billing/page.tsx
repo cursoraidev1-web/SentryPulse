@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { CheckIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-hot-toast';
 
 const plans = [
   {
@@ -50,28 +51,40 @@ const plans = [
 export default function BillingPage() {
   const { user, loading } = useAuth(true);
   const [team, setTeam] = useState<any>(null);
+  const [updatingPlan, setUpdatingPlan] = useState<string | null>(null);
+
+  const loadTeam = useCallback(async () => {
+    const token = auth.getToken();
+    if (!token) return;
+    try {
+      const teamsResponse: any = await api.teams.list(token);
+      const teams = Array.isArray(teamsResponse.data) ? teamsResponse.data : (teamsResponse.data?.teams || []);
+      if (teams.length > 0) setTeam(teams[0]);
+    } catch (error) {
+      console.error('Failed to load team:', error);
+    }
+  }, []);
 
   useEffect(() => {
-    const loadTeam = async () => {
-      const token = auth.getToken();
-      if (!token) return;
+    if (!loading && user) loadTeam();
+  }, [loading, user, loadTeam]);
 
-      try {
-        const teamsResponse: any = await api.teams.list(token);
-        const teams = teamsResponse.data?.teams || [];
-        
-        if (teams.length > 0) {
-          setTeam(teams[0]);
-        }
-      } catch (error) {
-        console.error('Failed to load team:', error);
-      }
-    };
-
-    if (!loading && user) {
-      loadTeam();
+  const changePlan = async (planName: string) => {
+    const token = auth.getToken();
+    if (!token || !team) return;
+    const planValue = planName.toLowerCase();
+    if (planValue === (team.plan || 'free')) return;
+    setUpdatingPlan(planName);
+    try {
+      await api.teams.update(token, team.id, { plan: planValue });
+      toast.success(`Plan updated to ${planName}`);
+      await loadTeam();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update plan');
+    } finally {
+      setUpdatingPlan(null);
     }
-  }, [loading, user]);
+  };
 
   if (loading || !team) {
     return (
@@ -139,14 +152,24 @@ export default function BillingPage() {
                     className={`mt-8 w-full ${
                       isCurrent ? 'btn btn-secondary' : 'btn btn-primary'
                     }`}
-                    disabled={isCurrent}
+                    disabled={isCurrent || updatingPlan !== null}
+                    onClick={() => !isCurrent && changePlan(plan.name)}
                   >
-                    {isCurrent ? 'Current Plan' : 'Upgrade'}
+                    {isCurrent
+                      ? 'Current Plan'
+                      : updatingPlan === plan.name
+                        ? 'Updating…'
+                        : plan.name === 'Free'
+                          ? 'Switch to Free'
+                          : 'Upgrade'}
                   </button>
                 </div>
               );
             })}
           </div>
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            Plan changes take effect immediately. To collect payments (e.g. Stripe), add a checkout flow and then call the same team update API with the new plan after successful payment.
+          </p>
         </div>
       </div>
     </DashboardLayout>

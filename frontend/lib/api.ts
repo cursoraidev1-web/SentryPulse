@@ -10,11 +10,12 @@ async function fetcher<T>(
 ): Promise<T> {
   const { token, ...fetchOptions } = options;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...fetchOptions.headers,
+    ...(typeof fetchOptions.headers === 'object' && !(fetchOptions.headers instanceof Headers)
+      ? (fetchOptions.headers as Record<string, string>)
+      : {}),
   };
-
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }

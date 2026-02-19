@@ -19,7 +19,7 @@ export default function IncidentsPage() {
 
       try {
         const teamsResponse: any = await api.teams.list(token);
-        const teams = teamsResponse.data?.teams || [];
+        const teams = Array.isArray(teamsResponse.data) ? teamsResponse.data : (teamsResponse.data?.teams || []);
         
         if (teams.length > 0) {
           const teamId = teams[0].id;

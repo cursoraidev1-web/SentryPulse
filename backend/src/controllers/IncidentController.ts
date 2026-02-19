@@ -17,6 +17,18 @@ export class IncidentController { // <--- The "export" keyword is crucial
     }
   };
 
+  // GET /api/incidents/:id
+  show = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const incident = await this.repo.findById(id);
+      if (!incident) return res.status(404).json({ message: 'Incident not found' });
+      res.json({ success: true, data: incident });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
   // POST /api/incidents
   store = async (req: Request, res: Response) => {
     try {
@@ -25,6 +37,33 @@ export class IncidentController { // <--- The "export" keyword is crucial
       await this.repo.create({ team_id, title, description, monitor_id, status });
       
       res.status(201).json({ success: true, message: 'Incident created' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+  // PUT /api/incidents/:id
+  update = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const incident = await this.repo.findById(id);
+      if (!incident) return res.status(404).json({ message: 'Incident not found' });
+      const { title, description, status } = req.body;
+      await this.repo.update(id, { title, description, status });
+      res.json({ success: true, message: 'Incident updated' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+  // POST /api/incidents/:id/resolve
+  resolve = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const incident = await this.repo.findById(id);
+      if (!incident) return res.status(404).json({ message: 'Incident not found' });
+      await this.repo.resolve(id);
+      res.json({ success: true, message: 'Incident resolved' });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

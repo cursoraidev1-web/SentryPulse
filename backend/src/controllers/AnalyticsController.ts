@@ -119,6 +119,34 @@ export class AnalyticsController {
     }
   };
 
+  // PUT /api/analytics/sites/:id
+  updateSite = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const site = await this.siteRepo.findById(id);
+      if (!site) return res.status(404).json({ message: 'Site not found' });
+      const { name, domain, timezone, is_enabled } = req.body;
+      await this.siteRepo.update(id, { name, domain, timezone, is_enabled });
+      const updated = await this.siteRepo.findById(id);
+      res.json({ success: true, data: updated });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+  // DELETE /api/analytics/sites/:id
+  deleteSite = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const existing = await this.siteRepo.findById(id);
+      if (!existing) return res.status(404).json({ message: 'Site not found' });
+      await this.siteRepo.delete(id);
+      res.json({ success: true, message: 'Site deleted' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
   // GET /api/analytics/sites/:id/stats (Reads data for Dashboard)
   getStats = async (req: Request, res: Response) => {
     try {

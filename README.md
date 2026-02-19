@@ -18,6 +18,8 @@ A comprehensive SaaS platform for website monitoring, analytics, and incident ma
 
 ## Quick Start
 
+**The backend is Node.js (Express + TypeScript), not PHP.** For step-by-step backend setup (Docker or local), see **[BACKEND_SETUP.md](BACKEND_SETUP.md)**.
+
 ### Prerequisites
 
 - Docker & Docker Compose
@@ -128,6 +130,11 @@ npm install
 npm run dev          # Start dev server
 npm run build        # Build for production
 ```
+
+## Testing
+
+- **API tests (backend):** `cd backend && npm test` — runs integration tests for health, auth, teams, monitors, incidents, analytics, status pages. Requires DB migrated and seeded.
+- **Full testing guide:** See **[TESTING.md](TESTING.md)** for the automated test suite and a manual checklist to verify all features in the browser.
 
 ## API Endpoints
 

@@ -355,6 +355,21 @@ export const migrations = [
     `,
     down: 'DROP TABLE IF EXISTS events_daily;'
   },
+  {
+    name: '016_incidents_add_team_id_and_started_at_default',
+    up: `ALTER TABLE incidents ADD COLUMN team_id BIGINT UNSIGNED NULL AFTER monitor_id, MODIFY COLUMN started_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP`,
+    down: 'ALTER TABLE incidents DROP COLUMN team_id;'
+  },
+  {
+    name: '017_incidents_backfill_team_id',
+    up: `UPDATE incidents i INNER JOIN monitors m ON i.monitor_id = m.id SET i.team_id = m.team_id`,
+    down: 'UPDATE incidents SET team_id = NULL'
+  },
+  {
+    name: '018_incidents_team_id_not_null',
+    up: `ALTER TABLE incidents MODIFY COLUMN team_id BIGINT UNSIGNED NOT NULL`,
+    down: 'ALTER TABLE incidents MODIFY COLUMN team_id BIGINT UNSIGNED NULL'
+  },
 ];
 
 export const runMigrations = async () => {
@@ -368,6 +383,8 @@ export const runMigrations = async () => {
     } catch (error: any) {
       if (error.code === 'ER_TABLE_EXISTS_ERROR') {
         console.log(`- ${migration.name} (already exists)`);
+      } else if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_DUP_COLUMN_NAME') {
+        console.log(`- ${migration.name} (column already exists, skipping)`);
       } else {
         console.error(`✗ ${migration.name}:`, error.message);
         throw error;

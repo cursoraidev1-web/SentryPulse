@@ -4,29 +4,26 @@ import { now } from '../utils/helpers';
 
 export class MonitorRepository {
   async findById(id: number): Promise<Monitor | null> {
-    return queryOne<Monitor>('SELECT * FROM sentry_monitors WHERE id = ?', [id]);
+    return queryOne<Monitor>('SELECT * FROM monitors WHERE id = ?', [id]);
   }
 
   // ✅ UPDATED WITH DEBUG LOGS
   async findByTeam(teamId: number): Promise<Monitor[]> {
-    console.log(`🔎 SEARCHING FOR TEAM ${teamId} IN sentry_monitors...`);
-    
     const results = await query<Monitor>(
-      'SELECT * FROM sentry_monitors WHERE team_id = ? ORDER BY created_at DESC', 
+      'SELECT * FROM monitors WHERE team_id = ? ORDER BY created_at DESC', 
       [teamId]
     );
 
-    console.log(`✅ FOUND ${results.length} MONITORS FOR TEAM ${teamId}`);
     return results;
   }
 
   async findEnabled(): Promise<Monitor[]> {
-    return query<Monitor>('SELECT * FROM sentry_monitors WHERE is_enabled = TRUE ORDER BY last_checked_at ASC');
+    return query<Monitor>('SELECT * FROM monitors WHERE is_enabled = TRUE ORDER BY last_checked_at ASC');
   }
 
   async create(data: Partial<Monitor>): Promise<Monitor> {
     const id = await insert(
-      `INSERT INTO sentry_monitors (
+      `INSERT INTO monitors (
         team_id, name, url, type, method, \`interval\`, timeout,
         is_enabled, check_ssl, check_keyword, expected_status_code,
         headers, body, created_at, updated_at
@@ -61,19 +58,19 @@ export class MonitorRepository {
     fields.push('updated_at = ?');
     values.push(now(), id);
 
-    await execute(`UPDATE sentry_monitors SET ${fields.join(', ')} WHERE id = ?`, values);
+    await execute(`UPDATE monitors SET ${fields.join(', ')} WHERE id = ?`, values);
   }
 
   async updateCheckResult(id: number, data: any): Promise<void> {
     await execute(
-      'UPDATE sentry_monitors SET last_checked_at = ?, last_status = ?, last_response_time = ?, status = ? WHERE id = ?',
+      'UPDATE monitors SET last_checked_at = ?, last_status = ?, last_response_time = ?, status = ? WHERE id = ?',
       [now(), data.status, data.response_time || null, data.monitor_status, id]
     );
   }
 
   async createCheck(monitorId: number, data: any): Promise<number> {
     return insert(
-      `INSERT INTO sentry_monitor_checks (
+      `INSERT INTO monitor_checks (
         monitor_id, status, status_code, response_time,
         error_message, ssl_valid, ssl_expires_at,
         dns_resolved, keyword_found, checked_at
@@ -88,12 +85,12 @@ export class MonitorRepository {
 
   async getChecks(monitorId: number, limit: number = 100): Promise<any[]> {
     return query(
-      'SELECT * FROM sentry_monitor_checks WHERE monitor_id = ? ORDER BY checked_at DESC LIMIT ?',
+      'SELECT * FROM monitor_checks WHERE monitor_id = ? ORDER BY checked_at DESC LIMIT ?',
       [monitorId, limit]
     );
   }
 
   async delete(id: number): Promise<void> {
-    await execute('DELETE FROM sentry_monitors WHERE id = ?', [id]);
+    await execute('DELETE FROM monitors WHERE id = ?', [id]);
   }
 }

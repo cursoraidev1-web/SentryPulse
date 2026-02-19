@@ -32,7 +32,8 @@ export default function AnalyticsDetailsPage() {
         const siteRes: any = await api.analytics.sites.get(token, Number(id));
         setSite(siteRes.data);
 
-        const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/sites/${id}/stats`, {
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+        const statsRes = await fetch(`${apiBase}/analytics/sites/${id}/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -62,7 +63,7 @@ export default function AnalyticsDetailsPage() {
   const copyToClipboard = () => {
     if (!site) return;
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const script = `<script defer src="${origin}/script.js" data-website-id="${site.tracking_code}"></script>`;
+    const script = `<script defer src="${origin}/loader.js" data-tracking-code="${site.tracking_code}" data-endpoint="${origin}/api"></script>`;
     navigator.clipboard.writeText(script);
     toast.success('Copied to clipboard!');
   };
@@ -120,7 +121,7 @@ export default function AnalyticsDetailsPage() {
                     <div className="relative group shadow-sm">
                         <div className="absolute top-0 left-0 w-full h-full bg-gray-900 rounded-lg -z-10"></div>
                         <pre className="bg-gray-900 text-gray-300 p-5 rounded-lg text-xs md:text-sm font-mono overflow-x-auto border border-gray-700 leading-relaxed">
-                            <span className="text-pink-400">&lt;script</span> <span className="text-orange-300">defer</span> <span className="text-blue-300">src</span>=<span className="text-green-300">"{origin}/script.js"</span> <span className="text-blue-300">data-website-id</span>=<span className="text-green-300">"{site.tracking_code}"</span><span className="text-pink-400">&gt;&lt;/script&gt;</span>
+                            <span className="text-pink-400">&lt;script</span> <span className="text-orange-300">defer</span> <span className="text-blue-300">src</span>=<span className="text-green-300">"{origin}/loader.js"</span> <span className="text-blue-300">data-tracking-code</span>=<span className="text-green-300">"{site.tracking_code}"</span> <span className="text-blue-300">data-endpoint</span>=<span className="text-green-300">"{origin}/api"</span><span className="text-pink-400">&gt;&lt;/script&gt;</span>
                         </pre>
                         <button 
                             onClick={copyToClipboard}

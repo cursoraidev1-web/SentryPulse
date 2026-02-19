@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
+import { toast } from 'react-hot-toast';
 import { 
   ArrowLeftIcon, 
   CheckCircleIcon, 
@@ -16,7 +17,8 @@ import {
   ExclamationTriangleIcon,
   ShieldCheckIcon,
   ServerIcon,
-  BoltIcon
+  BoltIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline';
 
 export default function MonitorDetailsPage() {
@@ -24,31 +26,45 @@ export default function MonitorDetailsPage() {
   const [monitor, setMonitor] = useState<any>(null);
   const [checks, setChecks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [runningCheck, setRunningCheck] = useState(false);
 
-  // Auto-refresh data every 5 seconds
+  const loadData = useCallback(async () => {
+    const token = auth.getToken();
+    if (!token || !id) return;
+    try {
+      const monRes: any = await api.monitors.get(token, Number(id));
+      setMonitor(monRes.data?.monitor ?? monRes.data);
+      const checksRes: any = await api.monitors.checks(token, Number(id));
+      const raw = checksRes?.data;
+      const list = Array.isArray(raw) ? raw : (raw?.checks || []);
+      setChecks(list);
+    } catch (error) {
+      console.error('Failed to load details:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
-    const loadData = async () => {
-      const token = auth.getToken();
-      if (!token || !id) return;
-
-      try {
-        const monRes: any = await api.monitors.get(token, Number(id));
-        setMonitor(monRes.data);
-
-        const checksRes: any = await api.monitors.checks(token, Number(id));
-        setChecks(checksRes.data?.checks || []);
-      } catch (error) {
-        console.error('Failed to load details:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
     const interval = setInterval(loadData, 5000);
     return () => clearInterval(interval);
+  }, [loadData]);
 
-  }, [id]);
+  const runCheckNow = async () => {
+    const token = auth.getToken();
+    if (!token || !id || runningCheck) return;
+    setRunningCheck(true);
+    try {
+      await api.monitors.runCheck(token, Number(id));
+      toast.success('Check completed');
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Check failed');
+    } finally {
+      setRunningCheck(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Just now';
@@ -166,7 +182,18 @@ export default function MonitorDetailsPage() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
-                <span className="text-xs text-gray-500">Live Updates</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Auto-refresh every 5s</span>
+                  <button
+                    type="button"
+                    onClick={runCheckNow}
+                    disabled={runningCheck}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-500 disabled:opacity-70"
+                  >
+                    <PlayIcon className="h-4 w-4" />
+                    {runningCheck ? 'Checking…' : 'Check now'}
+                  </button>
+                </div>
             </div>
             <ul className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[600px] overflow-y-auto">
                 {checks.map((check: any) => {
@@ -187,7 +214,7 @@ export default function MonitorDetailsPage() {
                                             {success ? 'Operational' : 'Connection Failed'}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-0.5">
-                                            {formatDate(check.created_at || check.createdAt)}
+                                            {formatDate(check.checked_at || check.created_at || check.createdAt)}
                                         </p>
                                         {!success && check.error_message && (
                                             <div className="mt-1.5 flex items-center text-xs text-red-700 bg-red-50 border border-red-100 px-2 py-1 rounded-md w-fit">

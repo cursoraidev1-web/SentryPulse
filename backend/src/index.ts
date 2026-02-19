@@ -43,13 +43,18 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 const PORT = config.port;
 
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-  logger.info(`Environment: ${config.env}`);
-  logger.info(`API available at http://localhost:${PORT}/api`);
-  
-  // <--- 2. Start the Engine
-  startScheduler(); 
-});
+function startServer() {
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`Environment: ${config.env}`);
+    logger.info(`API available at http://localhost:${PORT}/api`);
+    startScheduler();
+  });
+}
+
+// Only start server when run directly (not when imported for tests)
+if (require.main === module) {
+  startServer();
+}
 
 export default app;

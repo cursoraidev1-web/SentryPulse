@@ -30,8 +30,6 @@ export default function DashboardPage() {
       const teams = Array.isArray(teamsResponse.data) 
         ? teamsResponse.data 
         : (teamsResponse.data?.teams || []);
-      
-      console.log('Teams Found:', teams); // Debug log
 
       if (teams.length > 0) {
         const teamId = teams[0].id;
@@ -115,7 +113,7 @@ export default function DashboardPage() {
           
           <div className="flex items-center gap-3">
             <Link
-              href="/dashboard/monitors/new"
+              href="/monitors/new"
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
             >
               + Add Monitor

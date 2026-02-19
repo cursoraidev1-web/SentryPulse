@@ -121,8 +121,7 @@ export class TeamController {
     try {
       const pool = getPool();
       const teamId = req.params.id;
-      const { name, settings } = req.body;
-      // 🛠️ FIX
+      const { name, settings, plan, plan_expires_at } = req.body;
       const userId = (req as any).user?.id;
 
       // Verify owner or admin role
@@ -139,10 +138,22 @@ export class TeamController {
       if (name) {
         await pool.query('UPDATE teams SET name = ? WHERE id = ?', [name, teamId]);
       }
-      if (settings) {
-        // Ensure settings is stored as a string since we used TEXT type in DB
+      if (settings !== undefined) {
         const settingsString = typeof settings === 'object' ? JSON.stringify(settings) : settings;
         await pool.query('UPDATE teams SET settings = ? WHERE id = ?', [settingsString, teamId]);
+      }
+      // Billing: allow changing plan (free, pro, business)
+      if (plan !== undefined) {
+        const allowed = ['free', 'pro', 'business'];
+        const planValue = String(plan).toLowerCase();
+        if (!allowed.includes(planValue)) {
+          return res.status(400).json({ message: 'Invalid plan. Use: free, pro, or business' });
+        }
+        if (plan_expires_at !== undefined) {
+          await pool.query('UPDATE teams SET plan = ?, plan_expires_at = ? WHERE id = ?', [planValue, plan_expires_at || null, teamId]);
+        } else {
+          await pool.query('UPDATE teams SET plan = ? WHERE id = ?', [planValue, teamId]);
+        }
       }
 
       res.json({ success: true, message: 'Team updated successfully' });
@@ -213,6 +224,43 @@ export class TeamController {
       if (error.code === 'ER_DUP_ENTRY') {
         return res.status(400).json({ message: 'User is already in the team' });
       }
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // DELETE /api/teams/:id/members/:userId (Remove member)
+  async removeMember(req: Request, res: Response) {
+    try {
+      const pool = getPool();
+      const teamId = req.params.id;
+      const userIdToRemove = req.params.userId;
+      const requesterId = (req as any).user?.id;
+
+      const [requester]: any = await pool.query(
+        'SELECT role FROM team_users WHERE team_id = ? AND user_id = ?',
+        [teamId, requesterId]
+      );
+
+      if (requester.length === 0 || !['owner', 'admin'].includes(requester[0].role)) {
+        return res.status(403).json({ message: 'Insufficient permissions' });
+      }
+
+      const [owner]: any = await pool.query('SELECT owner_id FROM teams WHERE id = ?', [teamId]);
+      if (owner.length > 0 && owner[0].owner_id === Number(userIdToRemove)) {
+        return res.status(400).json({ message: 'Cannot remove the team owner' });
+      }
+
+      const [result]: any = await pool.query(
+        'DELETE FROM team_users WHERE team_id = ? AND user_id = ?',
+        [teamId, userIdToRemove]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Member not found in this team' });
+      }
+
+      res.json({ success: true, message: 'Member removed successfully' });
+    } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
     }
   }

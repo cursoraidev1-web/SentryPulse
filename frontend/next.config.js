@@ -6,10 +6,12 @@ const nextConfig = {
     domains: ['localhost'],
   },
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    const base = apiUrl.replace(/\/api\/?$/, '') || 'http://localhost:8000';
     return [
       {
         source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_URL + '/:path*',
+        destination: `${base}/api/:path*`,
       },
     ];
   },

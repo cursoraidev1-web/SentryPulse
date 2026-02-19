@@ -3,7 +3,8 @@ import { AuthController } from '../controllers/AuthController';
 import { TeamController } from '../controllers/TeamController';
 import { MonitorController } from '../controllers/MonitorController';
 import { AnalyticsController } from '../controllers/AnalyticsController';
-import { IncidentController } from '../controllers/IncidentController'; 
+import { IncidentController } from '../controllers/IncidentController';
+import { StatusPageController } from '../controllers/StatusPageController';
 import { auth } from '../middleware/auth';
 
 const router = Router();
@@ -23,6 +24,7 @@ router.get('/teams/:id', auth, teamController.show.bind(teamController));
 router.put('/teams/:id', auth, teamController.update.bind(teamController));
 router.delete('/teams/:id', auth, teamController.destroy.bind(teamController));
 router.post('/teams/:id/members', auth, teamController.addMember.bind(teamController));
+router.delete('/teams/:id/members/:userId', auth, teamController.removeMember.bind(teamController));
 
 // --- MONITOR ROUTES ---
 const monitorController = new MonitorController();
@@ -41,6 +43,8 @@ const analyticsController = new AnalyticsController();
 router.get('/analytics/sites', auth, analyticsController.getSites);
 router.get('/analytics/site/:id', auth, analyticsController.getSite);
 router.post('/analytics/sites', auth, analyticsController.createSite);
+router.put('/analytics/sites/:id', auth, analyticsController.updateSite);
+router.delete('/analytics/sites/:id', auth, analyticsController.deleteSite);
 
 // ✅ 1. Collect Route (Records the visit)
 router.post('/analytics/collect', analyticsController.collectEvent);
@@ -52,10 +56,24 @@ router.post('/analytics/pulse', analyticsController.pulse);
 router.get('/analytics/sites/:id/stats', auth, analyticsController.getStats);
 
 
-// --- INCIDENT ROUTES (New) ---
+// --- INCIDENT ROUTES ---
 const incidentController = new IncidentController();
 router.get('/incidents', auth, incidentController.index);
+router.get('/incidents/:id', auth, incidentController.show);
 router.post('/incidents', auth, incidentController.store);
+router.put('/incidents/:id', auth, incidentController.update);
+router.post('/incidents/:id/resolve', auth, incidentController.resolve);
+
+// --- STATUS PAGES ROUTES ---
+const statusPageController = new StatusPageController();
+router.get('/status-pages', auth, statusPageController.index);
+router.get('/status-pages/:id', auth, statusPageController.show);
+router.get('/status/:slug', statusPageController.getBySlug);
+router.post('/status-pages', auth, statusPageController.store);
+router.put('/status-pages/:id', auth, statusPageController.update);
+router.delete('/status-pages/:id', auth, statusPageController.destroy);
+router.post('/status-pages/:id/monitors', auth, statusPageController.addMonitor);
+router.delete('/status-pages/:id/monitors/:monitorId', auth, statusPageController.removeMonitor);
 
 // --- SYSTEM ROUTES ---
 router.get('/health', (req, res) => {

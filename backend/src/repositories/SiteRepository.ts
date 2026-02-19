@@ -42,6 +42,20 @@ export class SiteRepository {
     return this.findById(id) as Promise<Site>;
   }
 
+  // Update a site
+  async update(id: number, data: Partial<Pick<Site, 'name' | 'domain' | 'timezone' | 'is_enabled'>>): Promise<void> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    if (data.name !== undefined) { updates.push('name = ?'); values.push(data.name); }
+    if (data.domain !== undefined) { updates.push('domain = ?'); values.push(data.domain); }
+    if (data.timezone !== undefined) { updates.push('timezone = ?'); values.push(data.timezone); }
+    if (data.is_enabled !== undefined) { updates.push('is_enabled = ?'); values.push(data.is_enabled); }
+    if (updates.length === 0) return;
+    updates.push('updated_at = ?');
+    values.push(now(), id);
+    await execute(`UPDATE sites SET ${updates.join(', ')} WHERE id = ?`, values);
+  }
+
   // Delete a site
   async delete(id: number): Promise<void> {
     await execute('DELETE FROM sites WHERE id = ?', [id]);
