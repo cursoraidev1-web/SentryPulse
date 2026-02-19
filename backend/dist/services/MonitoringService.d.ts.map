@@ -1,0 +1,1 @@
+{"version":3,"file":"MonitoringService.d.ts","sourceRoot":"","sources":["../../src/services/MonitoringService.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,OAAO,EAAE,MAAM,iBAAiB,CAAC;AAE1C,qBAAa,iBAAiB;IAC5B,OAAO,CAAC,iBAAiB,CAAoB;;IAMvC,YAAY,CAAC,OAAO,EAAE,OAAO,GAAG,OAAO,CAAC,GAAG,CAAC;YAgFpC,QAAQ;IAuChB,YAAY,IAAI,OAAO,CAAC,GAAG,CAAC;IAalC,OAAO,CAAC,WAAW;CAUpB"}
